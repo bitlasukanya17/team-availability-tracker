@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Availability Tracker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="background"></div>
+
+<div class="container">
+
+    <div class="header">
+        <h1>🚀 Team Availability Tracker</h1>
+        <p>Monitor your team's live availability status</p>
+    </div>
+
+    <div class="stats">
+        <div class="card">
+            <h2 id="availableCount">2</h2>
+            <p>Available</p>
+        </div>
+
+        <div class="card">
+            <h2 id="busyCount">2</h2>
+            <p>Busy</p>
+        </div>
+
+        <div class="card">
+            <h2>4</h2>
+            <p>Total Members</p>
+        </div>
+    </div>
+
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Search team member...">
+    </div>
+
+    <div class="team-grid">
+
+        {% for member in members %}
+        <div class="member-card" data-name="{{ member.name }}">
+            
+            <img src="{{ member.avatar }}" class="avatar">
+
+            <div class="member-info">
+                <h2>{{ member.name }}</h2>
+                <p>{{ member.role }}</p>
+
+                <div class="status-container">
+                    <span class="status {% if member.available %}available{% else %}busy{% endif %}">
+                        {% if member.available %}
+                            AVAILABLE
+                        {% else %}
+                            BUSY
+                        {% endif %}
+                    </span>
+
+                    <label class="switch">
+                        <input type="checkbox"
+                               {% if member.available %}checked{% endif %}
+                               onchange="toggleStatus({{ member.id }}, this)">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+        </div>
+        {% endfor %}
+
+    </div>
+</div>
+
+<script>
+function toggleStatus(id, checkbox) {
+    fetch(`/toggle/${id}`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        const card = checkbox.closest('.member-card');
+        const status = card.querySelector('.status');
+
+        if(data.available) {
+            status.textContent = "AVAILABLE";
+            status.classList.remove('busy');
+            status.classList.add('available');
+        } else {
+            status.textContent = "BUSY";
+            status.classList.remove('available');
+            status.classList.add('busy');
+        }
+
+        updateCounts();
+    });
+}
+
+function updateCounts() {
+    const available = document.querySelectorAll('.status.available').length;
+    const busy = document.querySelectorAll('.status.busy').length;
+
+    document.getElementById('availableCount').textContent = available;
+    document.getElementById('busyCount').textContent = busy;
+}
+
+document.getElementById('searchInput').addEventListener('keyup', function() {
+    const value = this.value.toLowerCase();
+
+    document.querySelectorAll('.member-card').forEach(card => {
+        const name = card.dataset.name.toLowerCase();
+
+        if(name.includes(value)) {
+            card.style.display = 'flex';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+});
+</script>
+
+</body>
+</html>
